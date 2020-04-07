@@ -11,4 +11,4 @@ A utility for waking Valve's Lighthouse V2 units from sleep, or sending them bac
 Launch LighthouseControlCmd.exe with either an 'on' or 'off' argument
 
 ## Automated running
-Run install_service.bat as admin to install the service. It watches, every second, for a launch of SteamVR and wakes the lighthouses. Then it watches for SteamVR to exit, and puts the lighthouses to sleep
+Once built, navigate to the LighthouseConstrolService publish directory and run install_service.bat as admin to install the service. It watches, every second, for a launch of SteamVR and wakes the lighthouses. Then it watches for SteamVR to exit, and puts the lighthouses to sleep
