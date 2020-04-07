@@ -12,8 +12,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="3.1.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.EventLog" Version="3.1.3" />
-
-    <ProjectReference Include="..\LighthouseControlCore\LighthouseControlCore.csproj" />
+    <ProjectReference Include="..\LighthouseControlCmd\LighthouseControlCmd.csproj" />
   </ItemGroup>
 
   <ItemGroup>

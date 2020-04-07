@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29920.165
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LighthouseControlCore", "LighthouseControlCore\LighthouseControlCore.csproj", "{1021CEFC-E118-41C9-B933-35654BEB2A39}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LighthouseControlCmd", "LighthouseControlCmd\LighthouseControlCmd.csproj", "{1021CEFC-E118-41C9-B933-35654BEB2A39}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LighthouseControlService", "LighthouseControlService\LighthouseControlService.csproj", "{72AFF528-DF32-42EC-9C90-042C4708BFB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LighthouseControlService", "LighthouseControlService\LighthouseControlService.csproj", "{72AFF528-DF32-42EC-9C90-042C4708BFB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

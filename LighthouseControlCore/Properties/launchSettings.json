@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "LighthouseControlCore": {
-      "commandName": "Project",
-      "commandLineArgs": "off"
-    }
-  }
-}

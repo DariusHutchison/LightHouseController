@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LighthouseControlCmd": {
+      "commandName": "Executable",
+      "commandLineArgs": "on"
+    }
+  }
+}
