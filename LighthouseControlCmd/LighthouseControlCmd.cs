@@ -1,6 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using LighthouseControlCmd;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Configuration;
+using System.IO;
 
 namespace LighthouseControlCore
 {
@@ -8,12 +13,14 @@ namespace LighthouseControlCore
 	{
 		static void Main(string[] args)
 		{
-			var serviceCollection = new ServiceCollection();
-			serviceCollection.AddSingleton<LighthousePowerController>();
-			serviceCollection.AddLogging(logging => logging.AddConsole());
-			var serviceProvider = serviceCollection.BuildServiceProvider();
+			var host = Host.CreateDefaultBuilder()
+				.ConfigureServices((ctx, services) =>
+				{
+					services.Configure<AppSettings>(ctx.Configuration.GetSection("AppSettings"));
+					services.AddSingleton<LighthousePowerController>();
+				}).Build();
 
-			var powerController = serviceProvider.GetService<LighthousePowerController>();
+			var powerController = host.Services.GetService<LighthousePowerController>();
 
 			if (args.Length != 1)
 			{

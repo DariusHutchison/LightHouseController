@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LighthouseControlCmd;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks.Dataflow;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Devices.Enumeration;
@@ -19,13 +21,14 @@ namespace LighthouseControlCore
 
 		private bool enumerationComplete = false;
 		private byte _command;
-		private ActionBlock<(string id, string name)> _jobs;
+		private List<(string id, string name)> _lighthouseIds;
 		private readonly ILogger _logger;
+		private readonly int _minLighthouses = 2;
 
-		public LighthousePowerController(ILogger<LighthousePowerController> logger)
+		public LighthousePowerController(ILogger<LighthousePowerController> logger, IOptions<AppSettings> opt)
 		{
 			_logger = logger;
-			_jobs = new ActionBlock<(string id, string name)>(job => ProcessLighthouseId(job.id, job.name));
+			_minLighthouses = opt.Value.MinLighthouses;
 		}
 
 		private void ProcessLighthouseId(string id, string name)
@@ -112,6 +115,7 @@ namespace LighthouseControlCore
 
         private void StartWatch()
         {
+			_lighthouseIds = new List<(string, string)>();
 			var deviceWatcher = DeviceInformation.CreateWatcher(BluetoothLEDevice.GetDeviceSelectorFromPairingState(false));
 
 			// Register event handlers before starting the watcher.
@@ -127,9 +131,9 @@ namespace LighthouseControlCore
 			// Start the watcher.
 			deviceWatcher.Start();
 
-			_logger.LogInformation("Waiting for complete enumeration...");
+			_logger.LogInformation($"Looking for {_minLighthouses}, waiting for complete enumeration...");
 
-			while (!enumerationComplete)
+			while (_lighthouseIds.Count < _minLighthouses && !enumerationComplete)
 			{
 				Thread.Sleep(10);
 			}
@@ -137,6 +141,8 @@ namespace LighthouseControlCore
 			enumerationComplete = false;
 
 			deviceWatcher.Stop();
+
+			_lighthouseIds.ForEach(lid => ProcessLighthouseId(lid.id, lid.name));
 		}
 
 		private void DeviceWatcher_Stopped(DeviceWatcher sender, object args)
@@ -160,7 +166,7 @@ namespace LighthouseControlCore
 			_logger.LogDebug($"Device updated {args.Id}");
 		}
 
-		private async void DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation args)
+		private void DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation args)
 		{
 			if (!args.Name.StartsWith("LHB-"))
 			{
@@ -168,7 +174,7 @@ namespace LighthouseControlCore
 			}
 
 			_logger.LogInformation($"Found lighthouse {args.Name}");
-			_jobs.Post((args.Id, args.Name));
+			_lighthouseIds.Add((args.Id, args.Name));
 		}
 	}
 }

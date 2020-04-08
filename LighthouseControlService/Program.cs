@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using LighthouseControlCore;
+using LighthouseControlCmd;
 
 namespace LighthouseControlService
 {
@@ -22,6 +23,7 @@ namespace LighthouseControlService
             })
             .ConfigureServices((hostContext, services) =>
             {
+                services.Configure<AppSettings>(hostContext.Configuration.GetSection("AppSettings"));
                 services.AddSingleton<LighthousePowerController>();
                 services.AddHostedService<Worker>();
             }).UseWindowsService();
