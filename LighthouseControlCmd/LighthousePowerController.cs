@@ -33,14 +33,15 @@ namespace LighthouseControlCore
 			//https://docs.microsoft.com/en-us/windows/uwp/devices-sensors/gatt-client
 			var potentialLighthouseTask = BluetoothLEDevice.FromIdAsync(id).AsTask();
 			potentialLighthouseTask.Wait();
-
 			if (!potentialLighthouseTask.IsCompletedSuccessfully && potentialLighthouseTask.Result != null)
 			{
 				_logger.LogError($"Could not connect to lighthouse {name}");
 				return;
 			}
 
-			var gattServicesTask = potentialLighthouseTask.Result.GetGattServicesAsync().AsTask();
+			using var btDevice = potentialLighthouseTask.Result;
+
+			var gattServicesTask = btDevice.GetGattServicesAsync().AsTask();
 			gattServicesTask.Wait();
 			if (!gattServicesTask.IsCompletedSuccessfully || gattServicesTask.Result.Status != GattCommunicationStatus.Success)
 			{
@@ -50,7 +51,8 @@ namespace LighthouseControlCore
 
 			_logger.LogInformation($"Got services for {name}");
 
-			var service = gattServicesTask.Result.Services.SingleOrDefault(s => s.Uuid == _powerGuid);
+			using var service = gattServicesTask.Result.Services.SingleOrDefault(s => s.Uuid == _powerGuid);
+
 			if (service == null)
 			{
 				_logger.LogError("Could not find power service");
@@ -61,7 +63,7 @@ namespace LighthouseControlCore
 
 			var powerCharacteristicsTask = service.GetCharacteristicsAsync().AsTask();
 			powerCharacteristicsTask.Wait();
-			if(!powerCharacteristicsTask.IsCompletedSuccessfully || powerCharacteristicsTask.Result.Status != GattCommunicationStatus.Success)
+			if (!powerCharacteristicsTask.IsCompletedSuccessfully || powerCharacteristicsTask.Result.Status != GattCommunicationStatus.Success)
 			{
 				_logger.LogError("Could not get power service characteristics");
 				return;
@@ -76,7 +78,7 @@ namespace LighthouseControlCore
 
 			_logger.LogInformation($"Found power characteristic for {name}");
 
-			var w = new DataWriter();
+			using var w = new DataWriter();
 			w.WriteByte(_command);
 			var buff = w.DetachBuffer();
 
@@ -91,7 +93,6 @@ namespace LighthouseControlCore
 				return;
 			}
 
-			potentialLighthouseTask.Result.Dispose();
 			_logger.LogInformation($"Success for {name}");
 		}
 

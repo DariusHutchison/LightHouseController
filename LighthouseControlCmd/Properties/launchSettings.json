@@ -1,8 +1,8 @@
 {
   "profiles": {
     "LighthouseControlCmd": {
-      "commandName": "Executable",
-      "commandLineArgs": "on"
+      "commandName": "Project",
+      "commandLineArgs": "off"
     }
   }
 }
