@@ -36,7 +36,7 @@ namespace LighthouseControlCore
 			//https://docs.microsoft.com/en-us/windows/uwp/devices-sensors/gatt-client
 			var potentialLighthouseTask = BluetoothLEDevice.FromIdAsync(id).AsTask();
 			potentialLighthouseTask.Wait();
-			if (!potentialLighthouseTask.IsCompletedSuccessfully && potentialLighthouseTask.Result != null)
+			if (!potentialLighthouseTask.IsCompletedSuccessfully || potentialLighthouseTask.Result == null)
 			{
 				_logger.LogError($"Could not connect to lighthouse {name}");
 				return;
@@ -44,7 +44,7 @@ namespace LighthouseControlCore
 
 			using var btDevice = potentialLighthouseTask.Result;
 
-			var gattServicesTask = btDevice.GetGattServicesAsync().AsTask();
+			var gattServicesTask = btDevice.GetGattServicesAsync(BluetoothCacheMode.Uncached).AsTask();
 			gattServicesTask.Wait();
 			if (!gattServicesTask.IsCompletedSuccessfully || gattServicesTask.Result.Status != GattCommunicationStatus.Success)
 			{
@@ -64,7 +64,7 @@ namespace LighthouseControlCore
 
 			_logger.LogInformation($"Found power service for {name}");
 
-			var powerCharacteristicsTask = service.GetCharacteristicsAsync().AsTask();
+			var powerCharacteristicsTask = service.GetCharacteristicsAsync(BluetoothCacheMode.Uncached).AsTask();
 			powerCharacteristicsTask.Wait();
 			if (!powerCharacteristicsTask.IsCompletedSuccessfully || powerCharacteristicsTask.Result.Status != GattCommunicationStatus.Success)
 			{

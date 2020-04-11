@@ -16,8 +16,7 @@ namespace LighthouseControlService
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
             .ConfigureLogging((hostContext, logger) =>
-            { 
-                logger.AddConsole();
+            {
                 logger.AddEventLog();
                 
             })
