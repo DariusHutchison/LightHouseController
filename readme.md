@@ -4,8 +4,9 @@ A utility for waking Valve's Lighthouse V2 units from sleep, or sending them bac
 
 ## Building
 
+1. Have dotnet SDK or runtime installed (https://dotnet.microsoft.com/download/dotnet-core/3.1)
 1. Check out source code
-2. dotnet publish
+2. invoke dotnet publish inside the solution or project directories
 
 ## Manual running
 Launch LighthouseControlCmd.exe with either an 'on' or 'off' argument
