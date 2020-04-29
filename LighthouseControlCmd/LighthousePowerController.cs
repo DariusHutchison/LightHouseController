@@ -6,39 +6,47 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Windows.Devices.Bluetooth;
+using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
-using Windows.Devices.Enumeration;
 using Windows.Storage.Streams;
 
 namespace LighthouseControlCore
 {
-	public class LighthousePowerController
+	public class LighthousePowerController : IDisposable
     {
 		private const byte ON = 0x01;
 		private const byte OFF = 0x00;
 		private readonly Guid _powerGuid = Guid.Parse("00001523-1212-efde-1523-785feabcd124");
 		private readonly Guid _powerCharacteristic = Guid.Parse("00001525-1212-efde-1523-785feabcd124");
 
-		private bool enumerationComplete = false;
 		private byte _command;
-		private List<(string id, string name)> _lighthouseIds;
+		private HashSet<Lighthouse> _lighthouses = new HashSet<Lighthouse>();
 		private readonly ILogger _logger;
 		private readonly int _minLighthouses = 2;
+		private BluetoothLEAdvertisementWatcher watcher;
 
 		public LighthousePowerController(ILogger<LighthousePowerController> logger, IOptions<AppSettings> opt)
 		{
 			_logger = logger;
 			_minLighthouses = opt.Value.MinLighthouses;
+
+			watcher = new BluetoothLEAdvertisementWatcher();
+			watcher.Received += AdvertisementWatcher_Received;
 		}
 
-		private void ProcessLighthouseId(string id, string name)
+		public void Initialise()
+		{
+			watcher.Start();
+		}
+
+		private void ProcessLighthouse(Lighthouse lh)
 		{
 			//https://docs.microsoft.com/en-us/windows/uwp/devices-sensors/gatt-client
-			var potentialLighthouseTask = BluetoothLEDevice.FromIdAsync(id).AsTask();
+			var potentialLighthouseTask = BluetoothLEDevice.FromBluetoothAddressAsync(lh.Address).AsTask();
 			potentialLighthouseTask.Wait();
 			if (!potentialLighthouseTask.IsCompletedSuccessfully || potentialLighthouseTask.Result == null)
 			{
-				_logger.LogError($"Could not connect to lighthouse {name}");
+				_logger.LogError($"Could not connect to lighthouse {lh.Name}");
 				return;
 			}
 
@@ -52,7 +60,7 @@ namespace LighthouseControlCore
 				return;
 			}
 
-			_logger.LogInformation($"Got services for {name}");
+			_logger.LogDebug($"Got services for {lh.Name}");
 
 			using var service = gattServicesTask.Result.Services.SingleOrDefault(s => s.Uuid == _powerGuid);
 
@@ -62,7 +70,7 @@ namespace LighthouseControlCore
 				return;
 			}
 
-			_logger.LogInformation($"Found power service for {name}");
+			_logger.LogDebug($"Found power service for {lh.Name}");
 
 			var powerCharacteristicsTask = service.GetCharacteristicsAsync(BluetoothCacheMode.Uncached).AsTask();
 			powerCharacteristicsTask.Wait();
@@ -79,14 +87,14 @@ namespace LighthouseControlCore
 				return;
 			}
 
-			_logger.LogInformation($"Found power characteristic for {name}");
+			_logger.LogDebug($"Found power characteristic for {lh.Name}");
 
 			using var w = new DataWriter();
 			w.WriteByte(_command);
 			var buff = w.DetachBuffer();
 
 			var friendlyCommand = _command == ON ? "ON" : "OFF";
-			_logger.LogInformation($"Sending {friendlyCommand} command to {name}");
+			_logger.LogDebug($"Sending {friendlyCommand} command to {lh.Name}");
 			var writeResultTask = powerChar.WriteValueAsync(buff).AsTask();
 			writeResultTask.Wait();
 
@@ -96,85 +104,104 @@ namespace LighthouseControlCore
 				return;
 			}
 
-			_logger.LogInformation($"Success for {name}");
+			_logger.LogDebug($"Success for {lh.Name}");
 		}
 
         public void TurnOn()
         {
 			_logger.LogInformation("Turning lighthouses on...");
-			_command = ON;
-			StartWatch();
-        }
+
+			doCommand(lh => !lh.PoweredOn, ON);
+
+			_logger.LogInformation("All lighthouses on");
+		}
 
         public void TurnOff()
         {
 			_logger.LogInformation("Turning lighthouses off...");
-			_command = OFF;
-			StartWatch();
-        }
 
-        private void StartWatch()
-        {
-			_lighthouseIds = new List<(string, string)>();
-			var deviceWatcher = DeviceInformation.CreateWatcher(BluetoothLEDevice.GetDeviceSelectorFromPairingState(false));
+			doCommand(lh => lh.PoweredOn, OFF);
 
-			// Register event handlers before starting the watcher.
-			// Added, Updated and Removed are required to get all nearby devices
-			deviceWatcher.Added += DeviceWatcher_Added;
-			deviceWatcher.Updated += DeviceWatcher_Updated;
-			deviceWatcher.Removed += DeviceWatcher_Removed;
+			_logger.LogInformation("All lighthouses off");
+		}
 
-			// EnumerationCompleted and Stopped are optional to implement.
-			deviceWatcher.EnumerationCompleted += DeviceWatcher_EnumerationCompleted;
-			deviceWatcher.Stopped += DeviceWatcher_Stopped;
+		private void doCommand(Func<Lighthouse, bool> lighthousePredicate, byte command)
+		{
+			_command = command;
 
-			// Start the watcher.
-			deviceWatcher.Start();
+			WaitForMinLighthouses();
 
-			_logger.LogInformation($"Looking for {_minLighthouses}, waiting for complete enumeration...");
-
-			while (_lighthouseIds.Count < _minLighthouses && !enumerationComplete)
+			while (true)
 			{
-				Thread.Sleep(10);
+				var results = _lighthouses.Where(lighthousePredicate);
+				if (!results.Any())
+					break;
+
+				results.ToList().ForEach(ProcessLighthouse);
+				Thread.Sleep(5000);
 			}
-
-			enumerationComplete = false;
-
-			deviceWatcher.Stop();
-
-			_lighthouseIds.ForEach(lid => ProcessLighthouseId(lid.id, lid.name));
 		}
 
-		private void DeviceWatcher_Stopped(DeviceWatcher sender, object args)
+		private void WaitForMinLighthouses()
 		{
-			_logger.LogDebug("Stopped");
+			if (_lighthouses.Count < _minLighthouses)
+			{
+				_logger.LogInformation($"Looking for {_minLighthouses}");
+
+				while (_lighthouses.Count < _minLighthouses)
+				{
+					Thread.Sleep(100);
+				}
+			}
 		}
 
-		private void DeviceWatcher_EnumerationCompleted(DeviceWatcher sender, object args)
+		private void AdvertisementWatcher_Received(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs args)
 		{
-			_logger.LogInformation("Enumeration complete");
-			enumerationComplete = true;
-		}
-
-		private void DeviceWatcher_Removed(DeviceWatcher sender, DeviceInformationUpdate args)
-		{
-			_logger.LogDebug($"Device removed {args.Id}");
-		}
-
-		private void DeviceWatcher_Updated(DeviceWatcher sender, DeviceInformationUpdate args)
-		{
-			_logger.LogDebug($"Device updated {args.Id}");
-		}
-
-		private void DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation args)
-		{
-			if (!args.Name.StartsWith("LHB-"))
+			if (!args.Advertisement.LocalName.StartsWith("LHB-"))
 			{
 				return;
 			}
 
-			_logger.LogInformation($"Found lighthouse {args.Name}");
-			_lighthouseIds.Add((args.Id, args.Name));
+			var existing = _lighthouses.SingleOrDefault(lh => lh.Address == args.BluetoothAddress);
+
+			if(existing == null)
+			{
+				_logger.LogInformation($"Found lighthouse {args.Advertisement.LocalName}");
+
+				existing = new Lighthouse(args.Advertisement.LocalName, args.BluetoothAddress);
+				_lighthouses.Add(existing);
+			}
+
+			var valveData = args.Advertisement.GetManufacturerDataByCompanyId(0x055D).Single();
+			var data = new byte[valveData.Data.Length];
+
+			using(var reader = DataReader.FromBuffer(valveData.Data))
+			{
+				reader.ReadBytes(data);
+			}
+
+			existing.PoweredOn = data[4] == 0x03;
 		}
+
+		#region IDisposable Support
+		private bool disposedValue = false; // To detect redundant calls
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					watcher.Stop();
+				}
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+		#endregion
 	}
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.ComponentModel;
 using System.Configuration;
 using System.IO;
 
@@ -13,7 +14,7 @@ namespace LighthouseControlCore
 	{
 		static void Main(string[] args)
 		{
-			var host = Host.CreateDefaultBuilder()
+			using var host = Host.CreateDefaultBuilder()
 				.ConfigureServices((ctx, services) =>
 				{
 					services.Configure<AppSettings>(ctx.Configuration.GetSection("AppSettings"));
@@ -21,6 +22,7 @@ namespace LighthouseControlCore
 				}).Build();
 
 			var powerController = host.Services.GetService<LighthousePowerController>();
+			powerController.Initialise();
 
 			if (args.Length != 1)
 			{
@@ -28,13 +30,16 @@ namespace LighthouseControlCore
 				return;
 			}
 
-			if (args[0] == "on")
+			switch (args[0])
 			{
-				powerController.TurnOn();
-			}
-			else
-			{
-				powerController.TurnOff();
+				case "on":
+					powerController.TurnOn();
+					break;
+				case "off":
+					powerController.TurnOff();
+					break;
+				default:
+					throw new ArgumentException($"Unknown input command '{args[0]}'");
 			}
 		}
 	}

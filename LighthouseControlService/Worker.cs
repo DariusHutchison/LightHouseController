@@ -24,6 +24,7 @@ namespace LighthouseControlService
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+            controller.Initialise();
 
             while (!stoppingToken.IsCancellationRequested)
             {
