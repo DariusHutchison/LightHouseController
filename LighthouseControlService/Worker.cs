@@ -12,7 +12,7 @@ namespace LighthouseControlService
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private bool steamVrRunning = false;
+        private bool steamVrRunning = true;
         private LighthousePowerController controller;
 
         public Worker(ILogger<Worker> logger, LighthousePowerController lpc)
