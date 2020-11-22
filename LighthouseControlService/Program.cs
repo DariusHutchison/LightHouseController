@@ -10,7 +10,14 @@ namespace LighthouseControlService
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            if(args.Length != 0)
+            {
+                LighthouseControlCore.LighthouseControlCmd.Main(args);
+            }
+            else
+            {
+                CreateHostBuilder(args).Build().Run();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

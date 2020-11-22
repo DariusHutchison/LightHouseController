@@ -1,18 +1,13 @@
 ﻿using LighthouseControlCmd;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System;
-using System.ComponentModel;
-using System.Configuration;
-using System.IO;
 
 namespace LighthouseControlCore
 {
 	public class LighthouseControlCmd
 	{
-		static void Main(string[] args)
+		public static void Main(string[] args)
 		{
 			using var host = Host.CreateDefaultBuilder()
 				.ConfigureServices((ctx, services) =>
