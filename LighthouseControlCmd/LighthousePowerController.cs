@@ -13,7 +13,7 @@ using Windows.Storage.Streams;
 namespace LighthouseControlCore
 {
 	public class LighthousePowerController : IDisposable
-    {
+	{
 		private const byte ON = 0x01;
 		private const byte OFF = 0x00;
 		private readonly Guid _powerGuid = Guid.Parse("00001523-1212-efde-1523-785feabcd124");
@@ -52,7 +52,7 @@ namespace LighthouseControlCore
 
 			using var btDevice = potentialLighthouseTask.Result;
 
-			var gattServicesTask = btDevice.GetGattServicesAsync(BluetoothCacheMode.Uncached).AsTask();
+			System.Threading.Tasks.Task<GattDeviceServicesResult> gattServicesTask = btDevice.GetGattServicesAsync(BluetoothCacheMode.Uncached).AsTask();
 			gattServicesTask.Wait();
 			if (!gattServicesTask.IsCompletedSuccessfully || gattServicesTask.Result.Status != GattCommunicationStatus.Success)
 			{
@@ -107,8 +107,8 @@ namespace LighthouseControlCore
 			_logger.LogDebug($"Success for {lh.Name}");
 		}
 
-        public void TurnOn()
-        {
+		public void TurnOn()
+		{
 			_logger.LogInformation("Turning lighthouses on...");
 
 			doCommand(lh => !lh.PoweredOn, ON);
@@ -116,8 +116,8 @@ namespace LighthouseControlCore
 			_logger.LogInformation("All lighthouses on");
 		}
 
-        public void TurnOff()
-        {
+		public void TurnOff()
+		{
 			_logger.LogInformation("Turning lighthouses off...");
 
 			doCommand(lh => lh.PoweredOn, OFF);

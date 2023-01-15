@@ -1,8 +1,16 @@
 {
   "profiles": {
-    "LighthouseControlCmd": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "LighthousControllCmd Off": {
       "commandName": "Project",
       "commandLineArgs": "off"
+    },
+    "LighthouseControlCmd on": {
+      "commandName": "Project",
+      "commandLineArgs": "on"
     }
   }
 }

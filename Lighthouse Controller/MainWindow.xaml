@@ -1,0 +1,19 @@
+﻿<Window x:Name="Main_Window" x:Class="Lighthouse_Controller.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Lighthouse_Controller"
+        mc:Ignorable="d"
+        Title="Lighthouse Controller" Height="450" Width="800">
+    <Grid>
+        <Label x:Name="AppTitle_Lbl" Content="Lighthouse Controller&#xD;&#xA;" Margin="338,47,338,0" VerticalAlignment="Top" d:LayoutOverrides="Width"/>
+        <Button x:Name="LighthouseOn_Btn" Content="Lighthouses On" HorizontalAlignment="Left" Margin="230,167,0,0" VerticalAlignment="Top" Width="135" Click="StartLighthouses" />
+        <Button x:Name="LighthouseOff_Btn" Content="Lighthouses Off" HorizontalAlignment="Left" Margin="442,162,0,0" VerticalAlignment="Top" Width="135" Click="StopLighthouses"/>
+        <Button x:Name="InstallService_Btn" Content="Install Service" Height="135" Width="135" Margin="203,289,462,10" Click="InstallService" />
+        <Button x:Name="OpenSettingsPage_Btn" Content="Open Settings" Height="135" Width="135" Margin="36,150,629,149" Click="OpenPage" />
+        <Button x:Name="RemoveService_Btn" Content="Remove Service" Height="135" Width="135" Margin="442,284,222,15" Click="RemoveService"/>
+        <Label x:Name="ServiceStatusLabel_Lbl" Content="Service Status" Margin="270,217,394,184" d:LayoutOverrides="HorizontalAlignment"/>
+        <Label x:Name="ServiceStatus_Lbl" Content="Label" Margin="428,234,372,201"/>
+    </Grid>
+</Window>
