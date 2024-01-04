@@ -13,7 +13,7 @@ namespace LighthouseControlService
     {
         private readonly ILogger<Worker> _logger;
         private bool steamVrRunning = true;
-        private LighthousePowerController controller;
+        private readonly LighthousePowerController controller;
 
         public Worker(ILogger<Worker> logger, LighthousePowerController lpc)
         {

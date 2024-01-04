@@ -34,7 +34,7 @@ namespace LighthouseControlCore
 			watcher.Received += AdvertisementWatcher_Received;
 		}
 
-		public void Initialise()
+        public void Initialise()
 		{
 			watcher.Start();
 		}
@@ -69,7 +69,7 @@ namespace LighthouseControlCore
 				_logger.LogError("Could not find power service");
 				return;
 			}
-
+	
 			_logger.LogDebug($"Found power service for {lh.Name}");
 
 			var powerCharacteristicsTask = service.GetCharacteristicsAsync(BluetoothCacheMode.Uncached).AsTask();
@@ -80,12 +80,14 @@ namespace LighthouseControlCore
 				return;
 			}
 
-			var powerChar = powerCharacteristicsTask.Result.Characteristics.SingleOrDefault(c => c.Uuid == _powerCharacteristic && c.CharacteristicProperties == GattCharacteristicProperties.Write);
-			if (powerChar == null)
+			//var powerChar = powerCharacteristicsTask.Result.Characteristics.SingleOrDefault(c => c.Uuid == _powerCharacteristic && c.CharacteristicProperties == GattCharacteristicProperties.Write);
+            var powerChar = powerCharacteristicsTask.Result.Characteristics.SingleOrDefault(c => c.CharacteristicProperties == GattCharacteristicProperties.Write);
+            if (powerChar == null)
 			{
 				_logger.LogError("could not get power char");
 				return;
 			}
+			else { }
 
 			_logger.LogDebug($"Found power characteristic for {lh.Name}");
 
